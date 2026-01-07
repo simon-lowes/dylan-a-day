@@ -51,16 +51,25 @@ export default function Home() {
   const [kenBurnsClass, setKenBurnsClass] = useState<string>("");
   const [isLoaded, setIsLoaded] = useState(false);
 
+  const basePath = process.env.NODE_ENV === "production" ? "/dylan-a-day" : "";
+
   useEffect(() => {
-    setImageIndex(getDailyImageIndex(TOTAL_IMAGES));
+    const index = getDailyImageIndex(TOTAL_IMAGES);
+    setImageIndex(index);
     setKenBurnsClass(getDailyKenBurnsVariant());
-  }, []);
+
+    // Set favicon to match daily image
+    const link =
+      (document.querySelector("link[rel~='icon']") as HTMLLinkElement) ||
+      document.createElement("link");
+    link.rel = "icon";
+    link.href = `${basePath}/images/${index}.jpg`;
+    document.head.appendChild(link);
+  }, [basePath]);
 
   if (imageIndex === null) {
     return <div className="fixed inset-0 bg-black" />;
   }
-
-  const basePath = process.env.NODE_ENV === "production" ? "/dylan-a-day" : "";
   const imageSrc = `${basePath}/images/${imageIndex}.jpg`;
 
   return (
