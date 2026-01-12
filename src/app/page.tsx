@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 
 const TOTAL_IMAGES = 398;
+const TOTAL_VIDEOS = 30;
+const VIDEO_START_DAY = 13; // Jan 13
+const VIDEO_INTERVAL = 12.1; // Days between videos
 
 // Seeded random number generator for deterministic daily selection
 function seededRandom(seed: number): number {
@@ -35,6 +38,39 @@ function getDailyDirectionFlip(): boolean {
   return seededRandom(seed * 3) > 0.5;
 }
 
+// Generate array of all video days for a given year
+function getVideoDays(year: number): number[] {
+  const videoDays: number[] = [];
+  const daysInYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0) ? 366 : 365;
+
+  let currentDay = VIDEO_START_DAY;
+  while (currentDay <= daysInYear) {
+    videoDays.push(Math.round(currentDay));
+    currentDay += VIDEO_INTERVAL;
+  }
+
+  return videoDays;
+}
+
+// Check if a given day-of-year should display a video
+function isVideoDay(dayOfYear: number, year: number): boolean {
+  const videoDays = getVideoDays(year);
+  return videoDays.includes(dayOfYear);
+}
+
+// Get which video (0-29) to display on a video day
+function getVideoIndex(date: Date): number {
+  const startOfYear = new Date(date.getFullYear(), 0, 0);
+  const diff = date.getTime() - startOfYear.getTime();
+  const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+  // Use year and day as seed for deterministic random selection
+  const seed = date.getFullYear() * 1000 + dayOfYear;
+  const randomOffset = Math.floor(seededRandom(seed) * TOTAL_VIDEOS);
+
+  return randomOffset;
+}
+
 // Determine optimal Ken Burns animation based on image and viewport aspect ratios
 function getSmartKenBurnsClass(
   imageWidth: number,
@@ -62,18 +98,34 @@ function getSmartKenBurnsClass(
 }
 
 export default function Home() {
-  const [imageIndex, setImageIndex] = useState<number | null>(null);
+  const [mediaIndex, setMediaIndex] = useState<number | null>(null);
+  const [isVideo, setIsVideo] = useState(false);
   const [kenBurnsClass, setKenBurnsClass] = useState<string>("");
   const [isLoaded, setIsLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const basePath = process.env.NODE_ENV === "production" ? "/dylan-a-day" : "";
 
   useEffect(() => {
-    const index = getDailyImageIndex(TOTAL_IMAGES);
-    setImageIndex(index);
+    const today = new Date();
+    const startOfYear = new Date(today.getFullYear(), 0, 0);
+    const diff = today.getTime() - startOfYear.getTime();
+    const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-    // Set favicon to match daily image
+    const shouldShowVideo = isVideoDay(dayOfYear, today.getFullYear());
+    setIsVideo(shouldShowVideo);
+
+    let index: number;
+    if (shouldShowVideo) {
+      index = getVideoIndex(today);
+    } else {
+      index = getDailyImageIndex(TOTAL_IMAGES);
+    }
+
+    setMediaIndex(index);
+
+    // Set favicon to match daily media (always use JPG for favicon)
     const link =
       (document.querySelector("link[rel~='icon']") as HTMLLinkElement) ||
       document.createElement("link");
@@ -103,22 +155,39 @@ export default function Home() {
     }
   };
 
-  if (imageIndex === null) {
+  const handleVideoLoad = () => {
+    setIsLoaded(true);
+  };
+
+  if (mediaIndex === null) {
     return <div className="fixed inset-0 bg-black" />;
   }
-  const imageSrc = `${basePath}/images/${imageIndex}.jpg`;
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-black">
-      <img
-        ref={imgRef}
-        src={imageSrc}
-        alt="Dylan"
-        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
-          isLoaded ? "opacity-100" : "opacity-0"
-        } ${kenBurnsClass}`}
-        onLoad={handleImageLoad}
-      />
+      {isVideo ? (
+        <video
+          ref={videoRef}
+          src={`${basePath}/videos/${mediaIndex}.mp4`}
+          className="absolute inset-0 h-full w-full object-cover transition-opacity duration-1000"
+          autoPlay
+          loop
+          muted
+          playsInline
+          onLoadedData={handleVideoLoad}
+          style={{ opacity: isLoaded ? 1 : 0 }}
+        />
+      ) : (
+        <img
+          ref={imgRef}
+          src={`${basePath}/images/${mediaIndex}.jpg`}
+          alt="Dylan"
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
+            isLoaded ? "opacity-100" : "opacity-0"
+          } ${kenBurnsClass}`}
+          onLoad={handleImageLoad}
+        />
+      )}
     </div>
   );
 }

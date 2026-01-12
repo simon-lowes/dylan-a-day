@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "optimize": "npx tsx scripts/optimize-images.ts",
-    "predeploy": "npm run optimize && npm run build"
+    "optimize:videos": "npx tsx scripts/optimize-videos.ts",
+    "optimize:all": "npm run optimize && npm run optimize:videos",
+    "predeploy": "npm run optimize:all && npm run build"
   },
   "dependencies": {
     "next": "16.1.1",
