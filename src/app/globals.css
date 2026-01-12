@@ -104,3 +104,17 @@ body {
 .kenburns-pan-down {
   animation: kenburns-pan-down 30s ease-in-out infinite alternate;
 }
+
+/* Video Styles */
+video {
+  background: #000;
+}
+
+/* Hide video controls completely */
+video::-webkit-media-controls {
+  display: none !important;
+}
+
+video::-webkit-media-controls-enclosure {
+  display: none !important;
+}
