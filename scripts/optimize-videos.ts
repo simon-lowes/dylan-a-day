@@ -11,15 +11,24 @@ const TOTAL_VIDEOS = 30;
 
 /**
  * FFmpeg compression settings for web delivery
- * Target: 10-30MB per video, optimized for streaming
+ * Target: 5-20MB per video, optimized for fast streaming
+ *
+ * Changes from previous version:
+ * - CRF 28 (was 23): ~50% smaller files while maintaining quality
+ * - High profile (was baseline): 2x better compression with modern codec features
+ * - 720p (was 1080p): Better for web/mobile, ~75% of 1080p size
+ * - 24fps: Reduces file size by ~20% for videos with higher source fps
+ * - Level 4.0: Ensures compatibility with all modern browsers
  */
 const FFMPEG_SETTINGS = {
   videoCodec: 'libx264',
-  crf: '23',
+  crf: '28',
   preset: 'slow',
-  profile: 'baseline',
-  maxWidth: 1920,
-  maxHeight: 1080,
+  profile: 'high',
+  level: '4.0',
+  maxWidth: 1280,
+  maxHeight: 720,
+  fps: '24',
   audioCodec: 'aac',
   audioBitrate: '128k',
   movflags: '+faststart'
@@ -42,7 +51,8 @@ async function optimizeVideo(index: number): Promise<void> {
     '-crf', FFMPEG_SETTINGS.crf,
     '-preset', FFMPEG_SETTINGS.preset,
     '-profile:v', FFMPEG_SETTINGS.profile,
-    '-vf', `"scale='min(${FFMPEG_SETTINGS.maxWidth},iw)':'min(${FFMPEG_SETTINGS.maxHeight},ih)':force_original_aspect_ratio=decrease"`,
+    '-level', FFMPEG_SETTINGS.level,
+    '-vf', `"scale='min(${FFMPEG_SETTINGS.maxWidth},iw)':'min(${FFMPEG_SETTINGS.maxHeight},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,fps=${FFMPEG_SETTINGS.fps}"`,
     '-c:a', FFMPEG_SETTINGS.audioCodec,
     '-b:a', FFMPEG_SETTINGS.audioBitrate,
     '-movflags', FFMPEG_SETTINGS.movflags,

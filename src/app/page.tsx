@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 
 const TOTAL_IMAGES = 398;
 const TOTAL_VIDEOS = 30;
@@ -98,42 +98,42 @@ function getSmartKenBurnsClass(
 }
 
 export default function Home() {
-  const [mediaIndex, setMediaIndex] = useState<number | null>(null);
-  const [isVideo, setIsVideo] = useState(false);
-  const [kenBurnsClass, setKenBurnsClass] = useState<string>("");
-  const [isLoaded, setIsLoaded] = useState(false);
-  const imgRef = useRef<HTMLImageElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
   const basePath = process.env.NODE_ENV === "production" ? "/dylan-a-day" : "";
 
-  useEffect(() => {
+  // Calculate daily media on render instead of in effect
+  const dailyMedia = useMemo(() => {
     const today = new Date();
     const startOfYear = new Date(today.getFullYear(), 0, 0);
     const diff = today.getTime() - startOfYear.getTime();
     const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
 
     const shouldShowVideo = isVideoDay(dayOfYear, today.getFullYear());
-    setIsVideo(shouldShowVideo);
-
     let index: number;
+
     if (shouldShowVideo) {
       index = getVideoIndex(today);
     } else {
       index = getDailyImageIndex(TOTAL_IMAGES);
     }
 
-    setMediaIndex(index);
-    setIsLoaded(false); // Reset loaded state when media changes
+    return { isVideo: shouldShowVideo, index };
+  }, []);
 
-    // Set favicon to match daily media (always use JPG for favicon)
+  const [kenBurnsClass, setKenBurnsClass] = useState<string>("");
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Update favicon once on mount
+  useEffect(() => {
     const link =
       (document.querySelector("link[rel~='icon']") as HTMLLinkElement) ||
       document.createElement("link");
     link.rel = "icon";
-    link.href = `${basePath}/images/${index}.jpg`;
+    link.href = `${basePath}/images/${dailyMedia.index}.jpg`;
     document.head.appendChild(link);
-  }, [basePath]);
+  }, [basePath, dailyMedia.index]);
 
   const handleImageLoad = () => {
     setIsLoaded(true);
@@ -158,35 +158,85 @@ export default function Home() {
 
   const handleVideoLoad = () => {
     setIsLoaded(true);
+    setLoadError(false);
+
+    // Force play when metadata loads to ensure autoplay
+    if (videoRef.current) {
+      videoRef.current.play().catch((error) => {
+        console.warn('Autoplay blocked on metadata load:', error);
+      });
+    }
   };
 
-  if (mediaIndex === null) {
-    return <div className="fixed inset-0 bg-black" />;
-  }
+  const handleVideoError = () => {
+    console.error('Video failed to load');
+    setLoadError(true);
+  };
+
+  const handleImageError = () => {
+    console.error('Image failed to load');
+    setLoadError(true);
+  };
+
+  // Handle video autoplay errors gracefully
+  // Modern browsers require muted + playsInline for autoplay to work
+  useEffect(() => {
+    if (dailyMedia.isVideo && videoRef.current) {
+      const video = videoRef.current;
+
+      // Attempt to play and handle autoplay policy errors
+      const playPromise = video.play();
+
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.warn('Video autoplay was blocked:', error);
+          // Autoplay was prevented, but video will play on user interaction
+          // This is expected behavior in some browsers/contexts
+        });
+      }
+    }
+  }, [dailyMedia.isVideo]);
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-black">
-      {isVideo ? (
+      {/* Loading indicator - shown while media is loading */}
+      {!isLoaded && !loadError && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
+        </div>
+      )}
+
+      {/* Error state - shown if media fails to load */}
+      {loadError && (
+        <div className="absolute inset-0 flex items-center justify-center text-white">
+          <p>Failed to load media</p>
+        </div>
+      )}
+
+      {dailyMedia.isVideo ? (
         <video
           ref={videoRef}
-          src={`${basePath}/videos/${mediaIndex}.mp4`}
+          src={`${basePath}/videos/${dailyMedia.index}.mp4`}
           className="absolute inset-0 h-full w-full object-cover transition-opacity duration-1000"
           autoPlay
           loop
           muted
           playsInline
-          onLoadedData={handleVideoLoad}
+          preload="metadata"
+          onLoadedMetadata={handleVideoLoad}
+          onError={handleVideoError}
           style={{ opacity: isLoaded ? 1 : 0 }}
         />
       ) : (
         <img
           ref={imgRef}
-          src={`${basePath}/images/${mediaIndex}.jpg`}
+          src={`${basePath}/images/${dailyMedia.index}.jpg`}
           alt="Dylan"
           className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
             isLoaded ? "opacity-100" : "opacity-0"
           } ${kenBurnsClass}`}
           onLoad={handleImageLoad}
+          onError={handleImageError}
         />
       )}
     </div>
