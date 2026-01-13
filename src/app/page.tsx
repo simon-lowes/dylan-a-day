@@ -159,13 +159,6 @@ export default function Home() {
   const handleVideoLoad = () => {
     setIsLoaded(true);
     setLoadError(false);
-
-    // Force play when metadata loads to ensure autoplay
-    if (videoRef.current) {
-      videoRef.current.play().catch((error) => {
-        console.warn('Autoplay blocked on metadata load:', error);
-      });
-    }
   };
 
   const handleVideoError = () => {
@@ -215,6 +208,7 @@ export default function Home() {
 
       {dailyMedia.isVideo ? (
         <video
+          key={`video-${dailyMedia.index}`}
           ref={videoRef}
           src={`${basePath}/videos/${dailyMedia.index}.mp4`}
           className="absolute inset-0 h-full w-full object-cover transition-opacity duration-1000"
@@ -222,13 +216,14 @@ export default function Home() {
           loop
           muted
           playsInline
-          preload="metadata"
-          onLoadedMetadata={handleVideoLoad}
+          preload="auto"
+          onCanPlay={handleVideoLoad}
           onError={handleVideoError}
           style={{ opacity: isLoaded ? 1 : 0 }}
         />
       ) : (
         <img
+          key={`image-${dailyMedia.index}`}
           ref={imgRef}
           src={`${basePath}/images/${dailyMedia.index}.jpg`}
           alt="Dylan"
