@@ -124,6 +124,7 @@ export default function Home() {
     }
 
     setMediaIndex(index);
+    setIsLoaded(false); // Reset loaded state when media changes
 
     // Set favicon to match daily media (always use JPG for favicon)
     const link =
