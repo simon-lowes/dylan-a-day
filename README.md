@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dylan a Day
 
-## Getting Started
+A full-screen daily photo and video display featuring Dylan. Each day shows a different image with a subtle Ken Burns animation effect. Every 12.1 days, a video plays instead.
 
-First, run the development server:
+**Live site**: [simonlowes.github.io/dylan-a-day](https://simonlowes.github.io/dylan-a-day)
+
+## How It Works
+
+- **Daily Selection**: Uses seeded randomization based on the date, so everyone sees the same photo on the same day
+- **Ken Burns Effect**: Intelligently chooses pan/zoom direction based on image and viewport aspect ratios
+- **Video Days**: Every 12.1 days, a looping video plays instead of a static image
+- **398 images** and **30 videos** cycle throughout the year
+
+## Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Adding New Content
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Images
+1. Add images to `images/` folder with sequential numbering
+2. Update `TOTAL_IMAGES` in `src/app/page.tsx`
+3. Run `npm run optimize` to generate optimized versions
 
-## Learn More
+### Videos
+1. Add videos to `images/` folder (indices 0-29 have both .jpg and .mp4)
+2. Run `npm run optimize:videos` to compress for web
+3. Videos are stored in Git LFS due to file size
 
-To learn more about Next.js, take a look at the following resources:
+## Build & Deploy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run predeploy  # Optimizes all media and builds
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Deploys automatically to GitHub Pages on push to main.
 
-## Deploy on Vercel
+## Tech Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Next.js (App Router, static export)
+- TypeScript
+- Tailwind CSS
+- Sharp (image optimization)
+- FFmpeg (video optimization)
+- Git LFS (video storage)
