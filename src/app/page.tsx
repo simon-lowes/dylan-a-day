@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const TOTAL_IMAGES = 398;
 const TOTAL_VIDEOS = 30;
@@ -100,8 +100,17 @@ function getSmartKenBurnsClass(
 export default function Home() {
   const basePath = process.env.NODE_ENV === "production" ? "/dylan-a-day" : "";
 
-  // Calculate daily media on render instead of in effect
-  const dailyMedia = useMemo(() => {
+  // Start with null - calculate on client only to avoid hydration mismatch
+  const [dailyMedia, setDailyMedia] = useState<{ isVideo: boolean; index: number } | null>(null);
+
+  const [kenBurnsClass, setKenBurnsClass] = useState<string>("");
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Calculate daily media on client only (after hydration)
+  useEffect(() => {
     const today = new Date();
     const startOfYear = new Date(today.getFullYear(), 0, 0);
     const diff = today.getTime() - startOfYear.getTime();
@@ -116,24 +125,19 @@ export default function Home() {
       index = getDailyImageIndex(TOTAL_IMAGES);
     }
 
-    return { isVideo: shouldShowVideo, index };
+    setDailyMedia({ isVideo: shouldShowVideo, index });
   }, []);
 
-  const [kenBurnsClass, setKenBurnsClass] = useState<string>("");
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [loadError, setLoadError] = useState(false);
-  const imgRef = useRef<HTMLImageElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  // Update favicon once on mount
+  // Update favicon once media is determined
   useEffect(() => {
+    if (!dailyMedia) return;
     const link =
       (document.querySelector("link[rel~='icon']") as HTMLLinkElement) ||
       document.createElement("link");
     link.rel = "icon";
     link.href = `${basePath}/images/${dailyMedia.index}.jpg`;
     document.head.appendChild(link);
-  }, [basePath, dailyMedia.index]);
+  }, [basePath, dailyMedia]);
 
   const handleImageLoad = () => {
     setIsLoaded(true);
@@ -174,7 +178,7 @@ export default function Home() {
   // Handle video autoplay errors gracefully
   // Modern browsers require muted + playsInline for autoplay to work
   useEffect(() => {
-    if (dailyMedia.isVideo && videoRef.current) {
+    if (dailyMedia?.isVideo && videoRef.current) {
       const video = videoRef.current;
 
       // Attempt to play and handle autoplay policy errors
@@ -188,12 +192,12 @@ export default function Home() {
         });
       }
     }
-  }, [dailyMedia.isVideo]);
+  }, [dailyMedia]);
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-black">
-      {/* Loading indicator - shown while media is loading */}
-      {!isLoaded && !loadError && (
+      {/* Loading indicator - shown while media is loading or not yet determined */}
+      {(!dailyMedia || !isLoaded) && !loadError && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
         </div>
@@ -206,33 +210,35 @@ export default function Home() {
         </div>
       )}
 
-      {dailyMedia.isVideo ? (
-        <video
-          key={`video-${dailyMedia.index}`}
-          ref={videoRef}
-          src={`${basePath}/videos/${dailyMedia.index}.mp4`}
-          className="absolute inset-0 h-full w-full object-cover transition-opacity duration-1000"
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="auto"
-          onCanPlay={handleVideoLoad}
-          onError={handleVideoError}
-          style={{ opacity: isLoaded ? 1 : 0 }}
-        />
-      ) : (
-        <img
-          key={`image-${dailyMedia.index}`}
-          ref={imgRef}
-          src={`${basePath}/images/${dailyMedia.index}.jpg`}
-          alt="Dylan"
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
-            isLoaded ? "opacity-100" : "opacity-0"
-          } ${kenBurnsClass}`}
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-        />
+      {dailyMedia && (
+        dailyMedia.isVideo ? (
+          <video
+            key={`video-${dailyMedia.index}`}
+            ref={videoRef}
+            src={`${basePath}/videos/${dailyMedia.index}.mp4`}
+            className="absolute inset-0 h-full w-full object-cover transition-opacity duration-1000"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            onCanPlay={handleVideoLoad}
+            onError={handleVideoError}
+            style={{ opacity: isLoaded ? 1 : 0 }}
+          />
+        ) : (
+          <img
+            key={`image-${dailyMedia.index}`}
+            ref={imgRef}
+            src={`${basePath}/images/${dailyMedia.index}.jpg`}
+            alt="Dylan"
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
+              isLoaded ? "opacity-100" : "opacity-0"
+            } ${kenBurnsClass}`}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
+        )
       )}
     </div>
   );
