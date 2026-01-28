@@ -27,8 +27,9 @@ test.describe('Smoke test', () => {
 
     await page.goto(BASE, { waitUntil: 'networkidle' });
 
-    const root = page.locator('#__next');
-    await expect(root).not.toBeEmpty();
+    // App Router renders directly into body (no #__next wrapper)
+    const body = page.locator('body');
+    await expect(body).not.toBeEmpty();
 
     expect(fatalErrors, 'Fatal JS errors detected').toEqual([]);
   });
