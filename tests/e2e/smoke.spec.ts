@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+const BASE = process.env.E2E_BASE || 'http://localhost:3000';
+
 test.describe('Smoke test', () => {
   test('app loads without fatal JS errors', async ({ page }) => {
     const fatalErrors: string[] = [];
@@ -23,7 +25,7 @@ test.describe('Smoke test', () => {
       fatalErrors.push(error.message);
     });
 
-    await page.goto('/', { waitUntil: 'networkidle' });
+    await page.goto(BASE, { waitUntil: 'networkidle' });
 
     const root = page.locator('#__next');
     await expect(root).not.toBeEmpty();
