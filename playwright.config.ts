@@ -5,12 +5,9 @@ export default defineConfig({
   timeout: 30_000,
   expect: { timeout: 5000 },
   fullyParallel: false,
-  use: {
-    baseURL: 'http://localhost:3000/dylan-a-day',
-  },
   webServer: {
-    command: 'npx serve out -l 3000',
-    url: 'http://localhost:3000/dylan-a-day/',
+    command: 'npx -y serve out -l 3000',
+    url: 'http://localhost:3000',
     reuseExistingServer: true,
     timeout: 120_000,
   },
