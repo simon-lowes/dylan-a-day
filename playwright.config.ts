@@ -10,9 +10,9 @@ export default defineConfig({
   },
   webServer: {
     command: 'npx serve out -l 3000',
-    url: 'http://localhost:3000/dylan-a-day',
+    url: 'http://localhost:3000/dylan-a-day/',
     reuseExistingServer: true,
-    timeout: 30_000,
+    timeout: 120_000,
   },
   projects: [
     {
