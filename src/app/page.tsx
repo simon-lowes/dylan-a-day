@@ -103,6 +103,7 @@ function getSmartKenBurnsClass(
 
 export default function Home() {
   const basePath = process.env.NODE_ENV === "production" ? "/dylan-a-day" : "";
+  const videoBase = process.env.NEXT_PUBLIC_VIDEO_URL || `${basePath}/videos`;
 
   // Start with null - calculate on client only to avoid hydration mismatch
   const [dailyMedia, setDailyMedia] = useState<{ isVideo: boolean; index: number } | null>(null);
@@ -219,7 +220,7 @@ export default function Home() {
           <video
             key={`video-${dailyMedia.index}`}
             ref={videoRef}
-            src={`${basePath}/videos/${dailyMedia.index}.mp4`}
+            src={`${videoBase}/${dailyMedia.index}.mp4`}
             className="absolute inset-0 h-full w-full object-cover transition-opacity duration-1000"
             autoPlay
             loop
