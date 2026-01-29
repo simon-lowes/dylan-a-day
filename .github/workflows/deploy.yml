@@ -22,10 +22,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          lfs: true
+          lfs: false
+
+      - name: Restore LFS cache
+        id: lfs-cache
+        uses: actions/cache@v4
+        with:
+          path: .git/lfs
+          key: lfs-${{ hashFiles('.lfs-assets-id') }}
+          restore-keys: lfs-
 
       - name: Pull LFS files
-        run: git lfs pull
+        run: git lfs pull || echo "::warning::LFS pull failed (budget may be exceeded). Videos will be missing from this deploy."
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

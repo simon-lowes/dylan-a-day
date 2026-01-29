@@ -17,6 +17,7 @@ When running unattended: Never ask questions, never present options, make all de
 npm run dev        # Start dev server
 npm run build      # Production build
 npm run optimize   # Optimize images with Sharp
+npm run deduplicate # Remove byte-identical duplicate images
 npm run predeploy  # Optimize + build (for deployment)
 npm run lint       # ESLint check
 ```
@@ -27,20 +28,21 @@ src/app/
   page.tsx         # Main page with Ken Burns animation logic
   layout.tsx       # Root layout
   globals.css      # Global styles
-images/            # Source images (398 total)
+images/            # Source images (377 total)
 public/            # Optimized images for production
 scripts/
-  optimize-images.ts  # Image optimization script
+  optimize-images.ts     # Image optimization script
+  deduplicate-images.ts  # Remove duplicate images and renumber
 ```
 
 ## How It Works
-1. `getDailyImageIndex()` - Uses seeded random based on day-of-year
+1. `getDailyImageIndex()` - Fisher-Yates shuffle seeded by year, guarantees no repeats
 2. `getDailyDirectionFlip()` - Randomizes Ken Burns direction
 3. `getSmartKenBurnsClass()` - Picks optimal animation based on aspect ratios
 4. Images preloaded for smooth transitions
 
 ## Key Constants
-- `TOTAL_IMAGES = 398` - Update if adding more photos
+- `TOTAL_IMAGES = 377` - Update if adding more photos
 - Images numbered sequentially in `images/` folder
 
 ## Common Tasks
