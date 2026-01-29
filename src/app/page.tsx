@@ -2,30 +2,36 @@
 
 import { useState, useEffect, useRef } from "react";
 
-const TOTAL_IMAGES = 398;
+const TOTAL_IMAGES = 377;
 const TOTAL_VIDEOS = 30;
 const VIDEO_START_DAY = 13; // Jan 13
 const VIDEO_INTERVAL = 12.1; // Days between videos
 
-// Seeded random number generator for deterministic daily selection
-function seededRandom(seed: number): number {
-  const x = Math.sin(seed) * 10000;
-  return x - Math.floor(x);
+// LCG PRNG (Park-Miller) for deterministic seeded randomness
+function lcgNext(seed: number): number {
+  return (seed * 16807) % 2147483647;
 }
 
-// Get unique image index for a given day (no repeats within 365 days)
+// Generate a full permutation of [0..totalImages-1] seeded by year
+// Then index by dayOfYear — guarantees no repeats within a year
 function getDailyImageIndex(totalImages: number): number {
   const today = new Date();
   const startOfYear = new Date(today.getFullYear(), 0, 0);
   const diff = today.getTime() - startOfYear.getTime();
   const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-  // Use day of year as seed for shuffled selection
-  const seed = today.getFullYear() * 1000 + dayOfYear;
-  const randomOffset = Math.floor(seededRandom(seed) * totalImages);
+  // Create array [0, 1, 2, ..., totalImages-1]
+  const indices = Array.from({ length: totalImages }, (_, i) => i);
 
-  // Combine day and random offset to avoid simple sequential pattern
-  return (dayOfYear + randomOffset) % totalImages;
+  // Fisher-Yates shuffle with year-based seed
+  let seed = today.getFullYear();
+  for (let i = indices.length - 1; i > 0; i--) {
+    seed = lcgNext(seed);
+    const j = seed % (i + 1);
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+
+  return indices[dayOfYear % totalImages];
 }
 
 // Get daily random boolean for direction variety
@@ -35,7 +41,7 @@ function getDailyDirectionFlip(): boolean {
     today.getFullYear() * 10000 +
     (today.getMonth() + 1) * 100 +
     today.getDate();
-  return seededRandom(seed * 3) > 0.5;
+  return lcgNext(seed * 3) % 2 === 0;
 }
 
 // Generate array of all video days for a given year
@@ -66,9 +72,7 @@ function getVideoIndex(date: Date): number {
 
   // Use year and day as seed for deterministic random selection
   const seed = date.getFullYear() * 1000 + dayOfYear;
-  const randomOffset = Math.floor(seededRandom(seed) * TOTAL_VIDEOS);
-
-  return randomOffset;
+  return lcgNext(seed) % TOTAL_VIDEOS;
 }
 
 // Determine optimal Ken Burns animation based on image and viewport aspect ratios

@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "deduplicate": "npx tsx scripts/deduplicate-images.ts",
     "optimize": "npx tsx scripts/optimize-images.ts",
     "optimize:videos": "npx tsx scripts/optimize-videos.ts",
     "optimize:all": "npm run optimize && npm run optimize:videos",
