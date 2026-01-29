@@ -40,3 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 images/
+
+# videos (served from Cloudflare R2 in production)
+public/videos/
+
+# wrangler
+.wrangler/
