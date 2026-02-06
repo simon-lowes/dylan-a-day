@@ -1,9 +1,9 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 const SOURCE_DIR = path.join(process.cwd(), 'images');
 const OUTPUT_DIR = path.join(process.cwd(), 'public', 'videos');
@@ -43,22 +43,21 @@ async function optimizeVideo(index: number): Promise<void> {
     return;
   }
 
-  // Build FFmpeg command
-  const cmd = [
-    'ffmpeg',
-    '-i', `"${inputPath}"`,
+  // Build FFmpeg arguments array (execFile avoids shell injection from file paths)
+  const args = [
+    '-i', inputPath,
     '-c:v', FFMPEG_SETTINGS.videoCodec,
     '-crf', FFMPEG_SETTINGS.crf,
     '-preset', FFMPEG_SETTINGS.preset,
     '-profile:v', FFMPEG_SETTINGS.profile,
     '-level', FFMPEG_SETTINGS.level,
-    '-vf', `"scale='min(${FFMPEG_SETTINGS.maxWidth},iw)':'min(${FFMPEG_SETTINGS.maxHeight},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,fps=${FFMPEG_SETTINGS.fps}"`,
+    '-vf', `scale='min(${FFMPEG_SETTINGS.maxWidth},iw)':'min(${FFMPEG_SETTINGS.maxHeight},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,fps=${FFMPEG_SETTINGS.fps}`,
     '-c:a', FFMPEG_SETTINGS.audioCodec,
     '-b:a', FFMPEG_SETTINGS.audioBitrate,
     '-movflags', FFMPEG_SETTINGS.movflags,
     '-y', // Overwrite output
-    `"${outputPath}"`
-  ].join(' ');
+    outputPath
+  ];
 
   const inputStats = fs.statSync(inputPath);
   const inputSizeMB = (inputStats.size / 1024 / 1024).toFixed(2);
@@ -66,7 +65,7 @@ async function optimizeVideo(index: number): Promise<void> {
   console.log(`🎬 Processing ${index}.mp4 (${inputSizeMB}MB)...`);
 
   try {
-    await execAsync(cmd);
+    await execFileAsync('ffmpeg', args);
 
     const outputStats = fs.statSync(outputPath);
     const outputSizeMB = (outputStats.size / 1024 / 1024).toFixed(2);
