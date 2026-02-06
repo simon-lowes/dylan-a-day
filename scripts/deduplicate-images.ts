@@ -56,18 +56,23 @@ if (toRemove.size === 0) {
 }
 
 // Step 2: Delete duplicates from both directories
-for (const num of [...toRemove].sort((a, b) => a - b)) {
-  const pubFile = join(PUBLIC_DIR, `${num}.jpg`);
-  const srcFile = join(SOURCE_DIR, `${num}.jpg`);
+try {
+  for (const num of [...toRemove].sort((a, b) => a - b)) {
+    const pubFile = join(PUBLIC_DIR, `${num}.jpg`);
+    const srcFile = join(SOURCE_DIR, `${num}.jpg`);
 
-  if (existsSync(pubFile)) {
-    unlinkSync(pubFile);
-    console.log(`  Deleted public/images/${num}.jpg`);
+    if (existsSync(pubFile)) {
+      unlinkSync(pubFile);
+      console.log(`  Deleted public/images/${num}.jpg`);
+    }
+    if (existsSync(srcFile)) {
+      unlinkSync(srcFile);
+      console.log(`  Deleted images/${num}.jpg`);
+    }
   }
-  if (existsSync(srcFile)) {
-    unlinkSync(srcFile);
-    console.log(`  Deleted images/${num}.jpg`);
-  }
+} catch (error) {
+  console.error("Failed during duplicate deletion:", error);
+  process.exit(1);
 }
 
 // Step 3: Renumber remaining files sequentially in both directories
@@ -80,13 +85,37 @@ for (const dir of [PUBLIC_DIR, SOURCE_DIR]) {
   const dirLabel = dir === PUBLIC_DIR ? "public/images" : "images";
 
   // First pass: rename to temp names to avoid collisions
-  for (let i = 0; i < remaining.length; i++) {
-    renameSync(join(dir, remaining[i]), join(dir, `__temp_${i}.jpg`));
+  try {
+    for (let i = 0; i < remaining.length; i++) {
+      renameSync(join(dir, remaining[i]), join(dir, `__temp_${i}.jpg`));
+    }
+  } catch (error) {
+    console.error(`Failed renaming to temp names in ${dirLabel} at file index:`, error);
+    process.exit(1);
+  }
+
+  // Validate first pass: ensure all temp files exist
+  const actualTempFiles = readdirSync(dir).filter((f) => f.startsWith("__temp_") && f.endsWith(".jpg"));
+  if (actualTempFiles.length !== remaining.length) {
+    console.error(`Validation failed in ${dirLabel}: expected ${remaining.length} temp files, found ${actualTempFiles.length}`);
+    process.exit(1);
   }
 
   // Second pass: rename to final sequential numbers
-  for (let i = 0; i < remaining.length; i++) {
-    renameSync(join(dir, `__temp_${i}.jpg`), join(dir, `${i}.jpg`));
+  try {
+    for (let i = 0; i < remaining.length; i++) {
+      renameSync(join(dir, `__temp_${i}.jpg`), join(dir, `${i}.jpg`));
+    }
+  } catch (error) {
+    console.error(`Failed renaming to final names in ${dirLabel}:`, error);
+    process.exit(1);
+  }
+
+  // Validate second pass: ensure expected file count
+  const finalFiles = getJpgFiles(dir);
+  if (finalFiles.length !== remaining.length) {
+    console.error(`Validation failed in ${dirLabel}: expected ${remaining.length} files, found ${finalFiles.length}`);
+    process.exit(1);
   }
 
   console.log(`  ${dirLabel}: renumbered ${remaining.length} files (0-${remaining.length - 1})`);

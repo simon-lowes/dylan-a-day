@@ -140,7 +140,12 @@ export default function Home() {
       (document.querySelector("link[rel~='icon']") as HTMLLinkElement) ||
       document.createElement("link");
     link.rel = "icon";
-    link.href = `${basePath}/images/${dailyMedia.index}.jpg`;
+    // For video days, use a default image as favicon since video thumbnails aren't available
+    if (dailyMedia.isVideo) {
+      link.href = `${basePath}/images/0.jpg`;
+    } else {
+      link.href = `${basePath}/images/${dailyMedia.index}.jpg`;
+    }
     document.head.appendChild(link);
   }, [basePath, dailyMedia]);
 
