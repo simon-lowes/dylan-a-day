@@ -19,6 +19,7 @@ async function optimizeImages() {
   let totalOriginalSize = 0;
   let totalOptimizedSize = 0;
   let processed = 0;
+  let failures = 0;
 
   for (const file of files) {
     const filePath = path.join(IMAGES_DIR, file);
@@ -61,6 +62,7 @@ async function optimizeImages() {
     } catch (error) {
       console.error(`Error processing ${file}:`, error);
       totalOptimizedSize += originalStats.size;
+      failures++;
     }
   }
 
@@ -77,6 +79,14 @@ async function optimizeImages() {
     `   Optimized size: ${(totalOptimizedSize / 1024 / 1024).toFixed(2)} MB`
   );
   console.log(`   Space saved: ${totalSavings}%`);
+
+  if (failures > 0) {
+    console.error(`\n${failures} image(s) failed to optimize.`);
+    process.exit(1);
+  }
 }
 
-optimizeImages().catch(console.error);
+optimizeImages().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
