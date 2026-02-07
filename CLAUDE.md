@@ -47,10 +47,16 @@ scripts/
 - Images numbered sequentially in `images/` folder
 
 ## Video Hosting (Cloudflare R2)
-Videos are served from Cloudflare R2, not from the git repo. The `NEXT_PUBLIC_VIDEO_URL` env var controls the base URL:
-- **Production**: Set as a GitHub Actions variable pointing to the R2 public URL
+Videos are served from Cloudflare R2, not from the git repo (migrated Jan 2026 to avoid LFS bandwidth limits).
+
+- **Bucket:** `dylanaday`
+- **Public URL:** `https://pub-8515cc88f6a9443a87cfdf219368ad4c.r2.dev`
+- **Env var:** `NEXT_PUBLIC_VIDEO_URL` — set as a GitHub Actions variable (not secret, it's a public URL)
+- **Production**: Build bakes in the R2 URL at compile time
 - **Local dev**: Falls back to `basePath/videos` (keep videos in `public/videos/` locally)
-- Videos are `.mp4` files numbered `0.mp4` through `29.mp4`
+- Videos are `.mp4` files numbered `0.mp4` through `29.mp4`, optimized with FFmpeg (H.264 High, CRF 28, 720p, 24fps)
+- **Upload new videos:** Optimize with `npm run optimize:videos`, then `npx wrangler r2 object put "dylanaday/<n>.mp4" --file "public/videos/<n>.mp4" --content-type "video/mp4" --remote`
+- **IMPORTANT:** Always use `--remote` with wrangler — without it, uploads go to a local emulator
 
 ## Common Tasks
 
@@ -70,6 +76,9 @@ Videos are served from Cloudflare R2, not from the git repo. The `NEXT_PUBLIC_VI
 2. Deploy to GitHub Pages (via `.github/workflows/deploy.yml`)
 3. Images served from `public/` folder, videos from Cloudflare R2
 4. Set `NEXT_PUBLIC_VIDEO_URL` GitHub Actions variable to the R2 public URL
+
+## Testing Standards
+When testing this project, read `testing-standards.md` from the memory directory first. Before running tests, do a quick web search for updates to the specific tools being used. Update the memory file with any changes found.
 
 ## Design Notes
 - Full-screen immersive photo display
