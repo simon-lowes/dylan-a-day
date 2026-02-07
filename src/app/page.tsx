@@ -1,105 +1,15 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-
-const TOTAL_IMAGES = 377;
-const TOTAL_VIDEOS = 30;
-const VIDEO_START_DAY = 13; // Jan 13
-const VIDEO_INTERVAL = 12.1; // Days between videos
-
-// LCG PRNG (Park-Miller) for deterministic seeded randomness
-function lcgNext(seed: number): number {
-  return (seed * 16807) % 2147483647;
-}
-
-// Generate a full permutation of [0..totalImages-1] seeded by year
-// Then index by dayOfYear — guarantees no repeats within a year
-function getDailyImageIndex(totalImages: number): number {
-  const today = new Date();
-  const startOfYear = new Date(today.getFullYear(), 0, 0);
-  const diff = today.getTime() - startOfYear.getTime();
-  const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-  // Create array [0, 1, 2, ..., totalImages-1]
-  const indices = Array.from({ length: totalImages }, (_, i) => i);
-
-  // Fisher-Yates shuffle with year-based seed
-  let seed = today.getFullYear();
-  for (let i = indices.length - 1; i > 0; i--) {
-    seed = lcgNext(seed);
-    const j = seed % (i + 1);
-    [indices[i], indices[j]] = [indices[j], indices[i]];
-  }
-
-  return indices[dayOfYear % totalImages];
-}
-
-// Get daily random boolean for direction variety
-function getDailyDirectionFlip(): boolean {
-  const today = new Date();
-  const seed =
-    today.getFullYear() * 10000 +
-    (today.getMonth() + 1) * 100 +
-    today.getDate();
-  return lcgNext(seed * 3) % 2 === 0;
-}
-
-// Generate array of all video days for a given year
-function getVideoDays(year: number): number[] {
-  const videoDays: number[] = [];
-  const daysInYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0) ? 366 : 365;
-
-  let currentDay = VIDEO_START_DAY;
-  while (currentDay <= daysInYear) {
-    videoDays.push(Math.round(currentDay));
-    currentDay += VIDEO_INTERVAL;
-  }
-
-  return videoDays;
-}
-
-// Check if a given day-of-year should display a video
-function isVideoDay(dayOfYear: number, year: number): boolean {
-  const videoDays = getVideoDays(year);
-  return videoDays.includes(dayOfYear);
-}
-
-// Get which video (0-29) to display on a video day
-function getVideoIndex(date: Date): number {
-  const startOfYear = new Date(date.getFullYear(), 0, 0);
-  const diff = date.getTime() - startOfYear.getTime();
-  const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-  // Use year and day as seed for deterministic random selection
-  const seed = date.getFullYear() * 1000 + dayOfYear;
-  return lcgNext(seed) % TOTAL_VIDEOS;
-}
-
-// Determine optimal Ken Burns animation based on image and viewport aspect ratios
-function getSmartKenBurnsClass(
-  imageWidth: number,
-  imageHeight: number,
-  viewportWidth: number,
-  viewportHeight: number,
-  flipDirection: boolean
-): string {
-  const imageAspect = imageWidth / imageHeight;
-  const viewportAspect = viewportWidth / viewportHeight;
-
-  // Calculate how much the image is cropped in each dimension
-  const aspectDiff = imageAspect / viewportAspect;
-
-  if (aspectDiff > 1.15) {
-    // Image is significantly wider than viewport - pan horizontally
-    return flipDirection ? "kenburns-pan-left" : "kenburns-pan-right";
-  } else if (aspectDiff < 0.85) {
-    // Image is significantly taller than viewport - pan vertically
-    return flipDirection ? "kenburns-pan-up" : "kenburns-pan-down";
-  } else {
-    // Aspect ratios are similar - gentle zoom
-    return flipDirection ? "kenburns-zoom-in" : "kenburns-zoom-out";
-  }
-}
+import {
+  TOTAL_IMAGES,
+  TOTAL_VIDEOS,
+  getDailyImageIndex,
+  getDailyDirectionFlip,
+  getSmartKenBurnsClass,
+  isVideoDay,
+  getVideoIndex,
+} from "./daily-media";
 
 export default function Home() {
   const basePath = process.env.NODE_ENV === "production" ? "/dylan-a-day" : "";
