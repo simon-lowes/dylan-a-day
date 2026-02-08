@@ -46,3 +46,7 @@ public/videos/
 
 # wrangler
 .wrangler/
+
+# playwright serve root
+.serve-root/
+test-results/

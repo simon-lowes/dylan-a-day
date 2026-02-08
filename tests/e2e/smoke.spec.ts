@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const BASE = process.env.E2E_BASE || 'http://localhost:3000';
+const BASE = process.env.E2E_BASE || 'http://localhost:3000/dylan-a-day';
 
 test.describe('Smoke test', () => {
   test('app loads without fatal JS errors', async ({ page }) => {

@@ -6,8 +6,8 @@ export default defineConfig({
   expect: { timeout: 5000 },
   fullyParallel: false,
   webServer: {
-    command: 'npx -y serve out -l 3000',
-    url: 'http://localhost:3000',
+    command: 'rm -rf .serve-root && mkdir -p .serve-root && ln -sfn ../out .serve-root/dylan-a-day && npx -y serve .serve-root -l 3000',
+    url: 'http://localhost:3000/dylan-a-day',
     reuseExistingServer: true,
     timeout: 120_000,
   },
