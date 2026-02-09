@@ -12,7 +12,7 @@ import {
 } from "./daily-media";
 
 export default function Home() {
-  const basePath = process.env.NODE_ENV === "production" ? "/dylan-a-day" : "";
+  const basePath = "";
   const videoBase = process.env.NEXT_PUBLIC_VIDEO_URL || `${basePath}/videos`;
 
   // Start with null - calculate on client only to avoid hydration mismatch

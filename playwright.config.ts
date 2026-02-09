@@ -6,7 +6,7 @@ export default defineConfig({
   expect: { timeout: 5000 },
   fullyParallel: false,
   webServer: {
-    command: 'npx -y serve out -l 3000',
+    command: 'npx next start -p 3000',
     url: 'http://localhost:3000',
     reuseExistingServer: true,
     timeout: 120_000,
