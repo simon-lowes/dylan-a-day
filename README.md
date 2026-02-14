@@ -2,7 +2,7 @@
 
 A full-screen daily photo and video display featuring Dylan. Each day shows a different image with a subtle Ken Burns animation effect. Every 12.1 days, a video plays instead.
 
-**Live site**: [simonlowes.github.io/dylan-a-day](https://simonlowes.github.io/dylan-a-day)
+**Live site**: [dylanaday.simonlowes.cloud](https://dylanaday.simonlowes.cloud)
 
 ## How It Works
 
@@ -38,7 +38,7 @@ Open [localhost:3000](http://localhost:3000)
 npm run predeploy  # Optimizes all media and builds
 ```
 
-Deploys automatically to GitHub Pages on push to main.
+Deploys automatically to Dokploy VPS on push to main.
 
 ## Tech Stack
 
