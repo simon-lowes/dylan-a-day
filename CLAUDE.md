@@ -73,7 +73,7 @@ Videos are served from Cloudflare R2, not from the git repo (migrated Jan 2026 t
 
 ### Deployment
 1. Run `npm run predeploy`
-2. Deploy to GitHub Pages (via `.github/workflows/deploy.yml`)
+2. Deploy to Dokploy VPS (auto-deploys on push to main)
 3. Images served from `public/` folder, videos from Cloudflare R2
 4. Set `NEXT_PUBLIC_VIDEO_URL` GitHub Actions variable to the R2 public URL
 
