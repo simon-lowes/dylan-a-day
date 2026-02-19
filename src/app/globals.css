@@ -105,18 +105,6 @@ body {
   animation: kenburns-pan-down 30s ease-in-out infinite alternate;
 }
 
-/* Respect reduced motion preference */
-@media (prefers-reduced-motion: reduce) {
-  .kenburns-zoom-in,
-  .kenburns-zoom-out,
-  .kenburns-pan-left,
-  .kenburns-pan-right,
-  .kenburns-pan-up,
-  .kenburns-pan-down {
-    animation: none !important;
-  }
-}
-
 /* Video Styles */
 video {
   background: #000;
