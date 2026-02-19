@@ -129,9 +129,8 @@ export default function DailyImage({ isVideo, mediaIndex, videoBase }: DailyImag
           alt="Daily photo of Dylan"
           width={1920}
           height={1080}
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
-            isLoaded ? "opacity-100" : "opacity-0"
-          } ${kenBurnsClass}`}
+          fetchPriority="high"
+          className={`absolute inset-0 h-full w-full object-cover ${kenBurnsClass}`}
           onLoad={handleImageLoad}
           onError={handleImageError}
         />
