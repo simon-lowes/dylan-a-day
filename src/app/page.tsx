@@ -24,7 +24,7 @@ export default function Home() {
     : getDailyImageIndex(TOTAL_IMAGES);
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-black">
+    <div className="relative h-dvh w-full overflow-hidden bg-black">
       <DailyImage
         isVideo={shouldShowVideo}
         mediaIndex={mediaIndex}
