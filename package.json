@@ -39,7 +39,7 @@
     "@vitejs/plugin-react": "^5.1.4",
     "eslint": "^10",
     "eslint-config-next": "16.1.6",
-    "eslint-plugin-security": "^3.0.1",
+    "eslint-plugin-security": "^4.0.0",
     "serve": "^14.2.5",
     "sharp": "^0.34.5",
     "tailwindcss": "^4",
