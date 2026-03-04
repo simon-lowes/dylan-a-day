@@ -20,12 +20,15 @@ npm run optimize   # Optimize images with Sharp
 npm run deduplicate # Remove byte-identical duplicate images
 npm run predeploy  # Optimize + build (for deployment)
 npm run lint       # ESLint check
+npm run test       # Run unit tests (vitest)
+npm run test:e2e   # Run end-to-end tests (Playwright, chromium)
 ```
 
 ## Project Structure
 ```
 src/app/
   page.tsx         # Main page with Ken Burns animation logic
+  daily-media.ts   # Media constants (TOTAL_IMAGES, TOTAL_VIDEOS) and daily selection logic
   layout.tsx       # Root layout
   globals.css      # Global styles
 images/            # Source images (377 total)
@@ -41,7 +44,7 @@ scripts/
 3. `getSmartKenBurnsClass()` - Picks optimal animation based on aspect ratios
 4. Images preloaded for smooth transitions
 
-## Key Constants
+## Key Constants (in `src/app/daily-media.ts`)
 - `TOTAL_IMAGES = 377` - Update if adding more photos
 - `TOTAL_VIDEOS = 30` - Videos served from Cloudflare R2
 - Images numbered sequentially in `images/` folder
@@ -62,7 +65,7 @@ Videos are served from Cloudflare R2, not from the git repo (migrated Jan 2026 t
 
 ### Adding New Photos
 1. Add images to `images/` folder with sequential numbering
-2. Update `TOTAL_IMAGES` constant in `page.tsx`
+2. Update `TOTAL_IMAGES` constant in `src/app/daily-media.ts`
 3. Run `npm run optimize` to generate optimized versions
 4. Commit both source and optimized images
 
