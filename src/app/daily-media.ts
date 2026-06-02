@@ -60,13 +60,31 @@ export function isVideoDay(dayOfYear: number, year: number): boolean {
 
 // Get which video (0-29) to display on a video day
 export function getVideoIndex(date: Date): number {
-  const startOfYear = new Date(date.getFullYear(), 0, 0);
+  const year = date.getFullYear();
+  const startOfYear = new Date(year, 0, 0);
   const diff = date.getTime() - startOfYear.getTime();
   const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-  // Use year and day as seed for deterministic random selection
-  const seed = date.getFullYear() * 1000 + dayOfYear;
-  return lcgNext(seed) % TOTAL_VIDEOS;
+  // Find the ordinal position of this day within the year's video days.
+  // Index that ordinal into a year-seeded permutation of [0..TOTAL_VIDEOS-1]
+  // so each video day maps to a distinct video (mirrors getDailyImageIndex),
+  // surfacing the whole catalog instead of random-with-replacement collisions.
+  const videoDays = getVideoDays(year);
+  const ordinal = videoDays.indexOf(dayOfYear);
+
+  // Fall back to ordinal 0 if the date is not a recognized video day.
+  const dayOrdinal = ordinal >= 0 ? ordinal : 0;
+
+  // Fisher-Yates shuffle with year-based seed
+  const indices = Array.from({ length: TOTAL_VIDEOS }, (_, i) => i);
+  let seed = year;
+  for (let i = indices.length - 1; i > 0; i--) {
+    seed = lcgNext(seed);
+    const j = seed % (i + 1);
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+
+  return indices[dayOrdinal % TOTAL_VIDEOS];
 }
 
 // Determine optimal Ken Burns animation based on image and viewport aspect ratios

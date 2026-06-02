@@ -75,35 +75,85 @@ try {
   process.exit(1);
 }
 
-// Step 3: Renumber remaining files sequentially in both directories
+// Step 3: Renumber remaining files sequentially in both directories.
+//
+// public/images/N.jpg and images/N.jpg must stay in correspondence (same N =>
+// same photo at different resolutions). Renumbering each directory independently
+// by re-sorting its own current contents silently breaks this whenever the two
+// directories hold different number sets. Instead, derive ONE canonical mapping
+// from the surviving PUBLIC_DIR numbers and apply that SAME old-number ->
+// new-number mapping to both directories, keyed by original number.
 console.log("\nRenumbering remaining files...");
+
+// Helper: extract sorted surviving image numbers from a directory.
+function getJpgNumbers(dir: string): number[] {
+  return getJpgFiles(dir).map((f) => parseInt(f.replace(".jpg", ""), 10));
+}
+
+const publicNumbers = getJpgNumbers(PUBLIC_DIR);
+
+// Cross-directory invariant: the surviving number set must be identical in both
+// directories, otherwise the same final index would be assigned to
+// non-corresponding source/public files (silent data corruption). Abort if not.
+if (existsSync(SOURCE_DIR)) {
+  const sourceNumbers = getJpgNumbers(SOURCE_DIR);
+  const publicSet = new Set(publicNumbers);
+  const sourceSet = new Set(sourceNumbers);
+
+  const onlyInPublic = publicNumbers.filter((n) => !sourceSet.has(n));
+  const onlyInSource = sourceNumbers.filter((n) => !publicSet.has(n));
+
+  if (onlyInPublic.length > 0 || onlyInSource.length > 0) {
+    console.error(
+      "Aborting renumber: public/images and images do not hold the same set of image numbers."
+    );
+    if (onlyInPublic.length > 0) {
+      console.error(`  Only in public/images: ${onlyInPublic.sort((a, b) => a - b).join(", ")}`);
+    }
+    if (onlyInSource.length > 0) {
+      console.error(`  Only in images: ${onlyInSource.sort((a, b) => a - b).join(", ")}`);
+    }
+    console.error(
+      "  Renumbering would break the public<->source correspondence. Reconcile the directories first."
+    );
+    process.exit(1);
+  }
+}
+
+// Canonical mapping: original number (sorted ascending) -> final sequential index.
+const oldToNew = new Map<number, number>();
+publicNumbers.forEach((oldNum, newIndex) => oldToNew.set(oldNum, newIndex));
 
 for (const dir of [PUBLIC_DIR, SOURCE_DIR]) {
   if (!existsSync(dir)) continue;
 
-  const remaining = getJpgFiles(dir);
   const dirLabel = dir === PUBLIC_DIR ? "public/images" : "images";
+  // Apply the SAME mapping to this directory, keyed by each file's original
+  // number (not by re-sorting this directory's contents independently).
+  const numbers = [...oldToNew.keys()].sort((a, b) => a - b);
 
-  // First pass: rename to temp names to avoid collisions
+  // First pass: rename each original number to a temp name keyed by its FINAL
+  // index, so both directories converge on identical final numbering.
   try {
-    for (let i = 0; i < remaining.length; i++) {
-      renameSync(join(dir, remaining[i]), join(dir, `__temp_${i}.jpg`));
+    for (const oldNum of numbers) {
+      const newIndex = oldToNew.get(oldNum)!;
+      renameSync(join(dir, `${oldNum}.jpg`), join(dir, `__temp_${newIndex}.jpg`));
     }
   } catch (error) {
-    console.error(`Failed renaming to temp names in ${dirLabel} at file index:`, error);
+    console.error(`Failed renaming to temp names in ${dirLabel}:`, error);
     process.exit(1);
   }
 
   // Validate first pass: ensure all temp files exist
   const actualTempFiles = readdirSync(dir).filter((f) => f.startsWith("__temp_") && f.endsWith(".jpg"));
-  if (actualTempFiles.length !== remaining.length) {
-    console.error(`Validation failed in ${dirLabel}: expected ${remaining.length} temp files, found ${actualTempFiles.length}`);
+  if (actualTempFiles.length !== numbers.length) {
+    console.error(`Validation failed in ${dirLabel}: expected ${numbers.length} temp files, found ${actualTempFiles.length}`);
     process.exit(1);
   }
 
   // Second pass: rename to final sequential numbers
   try {
-    for (let i = 0; i < remaining.length; i++) {
+    for (let i = 0; i < numbers.length; i++) {
       renameSync(join(dir, `__temp_${i}.jpg`), join(dir, `${i}.jpg`));
     }
   } catch (error) {
@@ -113,14 +163,14 @@ for (const dir of [PUBLIC_DIR, SOURCE_DIR]) {
 
   // Validate second pass: ensure expected file count
   const finalFiles = getJpgFiles(dir);
-  if (finalFiles.length !== remaining.length) {
-    console.error(`Validation failed in ${dirLabel}: expected ${remaining.length} files, found ${finalFiles.length}`);
+  if (finalFiles.length !== numbers.length) {
+    console.error(`Validation failed in ${dirLabel}: expected ${numbers.length} files, found ${finalFiles.length}`);
     process.exit(1);
   }
 
-  console.log(`  ${dirLabel}: renumbered ${remaining.length} files (0-${remaining.length - 1})`);
+  console.log(`  ${dirLabel}: renumbered ${numbers.length} files (0-${numbers.length - 1})`);
 }
 
 const finalCount = getJpgFiles(PUBLIC_DIR).length;
 console.log(`\nDone! ${finalCount} unique images remain.`);
-console.log(`Update TOTAL_IMAGES in src/app/page.tsx to ${finalCount}`);
+console.log(`Update TOTAL_IMAGES in src/app/daily-media.ts to ${finalCount}`);

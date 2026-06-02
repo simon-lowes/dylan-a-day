@@ -309,6 +309,27 @@ describe('getVideoIndex', () => {
     // With 30 dates and 30 videos, we should see variety
     expect(indices.size).toBeGreaterThan(1);
   });
+
+  it('assigns a distinct video to every video day (full catalog coverage)', () => {
+    // Each of the 30 video days should surface a different video so the whole
+    // catalog is used and no day repeats another (no collisions, no skips).
+    const year = 2026;
+    const videoDays = getVideoDays(year);
+    const startOfYear = new Date(year, 0, 0);
+
+    const indices = videoDays.map((dayOfYear) => {
+      const date = new Date(startOfYear.getTime() + dayOfYear * 24 * 60 * 60 * 1000);
+      return getVideoIndex(date);
+    });
+
+    const unique = new Set(indices);
+    expect(unique.size).toBe(videoDays.length);
+    // Every assigned index must be a valid video index.
+    indices.forEach((idx) => {
+      expect(idx).toBeGreaterThanOrEqual(0);
+      expect(idx).toBeLessThan(TOTAL_VIDEOS);
+    });
+  });
 });
 
 describe('Fisher-Yates shuffle correctness', () => {
