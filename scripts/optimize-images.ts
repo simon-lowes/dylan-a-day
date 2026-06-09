@@ -50,9 +50,22 @@ async function optimizeImages() {
         .jpeg({ quality: QUALITY, progressive: true })
         .toBuffer();
 
-      fs.writeFileSync(filePath, outputBuffer);
+      // Output is always JPEG, so the file must have a .jpg extension to match
+      // its actual bytes (and what the app requests: N.jpg). For .png/.jpeg
+      // inputs, write the JPEG to a .jpg path and remove the mislabeled original
+      // instead of overwriting JPEG bytes under a non-.jpg name.
+      const ext = path.extname(file);
+      const outputPath =
+        ext.toLowerCase() === ".jpg"
+          ? filePath
+          : path.join(IMAGES_DIR, `${path.basename(file, ext)}.jpg`);
 
-      const newStats = fs.statSync(filePath);
+      fs.writeFileSync(outputPath, outputBuffer);
+      if (outputPath !== filePath) {
+        fs.unlinkSync(filePath);
+      }
+
+      const newStats = fs.statSync(outputPath);
       totalOptimizedSize += newStats.size;
 
       processed++;
