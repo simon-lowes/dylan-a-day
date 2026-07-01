@@ -13,7 +13,11 @@ import {
 
 export default function Home() {
   const basePath = "";
-  const videoBase = process.env.NEXT_PUBLIC_VIDEO_URL || `${basePath}/videos`;
+  // Production serves videos via the same-origin /r2 proxy (see next.config.ts
+  // rewrites) so the browser never requests *.r2.dev directly (that domain is on
+  // malware DNS blocklists). Local dev uses bundled files in public/videos.
+  const videoBase =
+    process.env.NODE_ENV === "production" ? "/r2" : `${basePath}/videos`;
 
   // Start with null - calculate on client only to avoid hydration mismatch
   const [dailyMedia, setDailyMedia] = useState<{ isVideo: boolean; index: number } | null>(null);

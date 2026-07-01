@@ -53,10 +53,10 @@ scripts/
 Videos are served from Cloudflare R2, not from the git repo (migrated Jan 2026 to avoid LFS bandwidth limits).
 
 - **Bucket:** `dylanaday`
-- **Public URL:** `https://pub-8515cc88f6a9443a87cfdf219368ad4c.r2.dev`
-- **Env var:** `NEXT_PUBLIC_VIDEO_URL` — set as a GitHub Actions variable (not secret, it's a public URL)
-- **Production**: Build bakes in the R2 URL at compile time
-- **Local dev**: Falls back to `basePath/videos` (keep videos in `public/videos/` locally)
+- **R2 origin:** `https://pub-8515cc88f6a9443a87cfdf219368ad4c.r2.dev` (referenced only in `next.config.ts` as `R2_VIDEO_ORIGIN`)
+- **Delivery (production):** The browser NEVER requests `*.r2.dev` directly — that domain is on malware DNS blocklists (e.g. Pi-hole RPiList-Malware `||r2.dev^`) and gets null-routed, which broke playback on video days. Instead a `next.config.ts` rewrite proxies `/r2/:path*` → the R2 origin, so videos load same-origin from `dylanaday.simonlowes.cloud/r2/<n>.mp4`. `page.tsx` sets `videoBase = "/r2"` when `NODE_ENV === "production"`.
+- **`NEXT_PUBLIC_VIDEO_URL` is no longer read** (was previously baked in at build). The stale Dokploy env var, if still set, is harmless and can be deleted.
+- **Local dev**: `videoBase` falls back to `basePath/videos` (keep videos in `public/videos/` locally; the `/r2` proxy is prod-only, and this dev machine can't reach `r2.dev` through Pi-hole anyway)
 - Videos are `.mp4` files numbered `0.mp4` through `29.mp4`, optimized with FFmpeg (H.264 High, CRF 28, 720p, 24fps)
 - **Upload new videos:** Optimize with `npm run optimize:videos`, then `npx wrangler r2 object put "dylanaday/<n>.mp4" --file "public/videos/<n>.mp4" --content-type "video/mp4" --remote`
 - **IMPORTANT:** Always use `--remote` with wrangler — without it, uploads go to a local emulator
