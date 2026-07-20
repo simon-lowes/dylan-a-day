@@ -12,11 +12,11 @@ on:
 
 jobs:
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    # Dependabot-triggered pull_request runs cannot read repo Actions secrets,
+    # so this job always failed on dependabot PRs (empty OAuth token). Those
+    # PRs are already reviewed by the dependabot-auto-merge workflow, which
+    # runs on pull_request_target and does get secrets.
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
 
     runs-on: ubuntu-latest
     permissions:
