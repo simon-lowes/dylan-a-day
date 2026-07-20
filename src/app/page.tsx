@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import {
   TOTAL_IMAGES,
-  TOTAL_VIDEOS,
   getDailyImageIndex,
   getDailyDirectionFlip,
   getSmartKenBurnsClass,
@@ -44,6 +43,9 @@ export default function Home() {
       index = getDailyImageIndex(TOTAL_IMAGES);
     }
 
+    // Intentional single post-mount setState: dailyMedia must be computed on
+    // the client only, or the server-rendered HTML would not match.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDailyMedia({ isVideo: shouldShowVideo, index });
   }, []);
 
