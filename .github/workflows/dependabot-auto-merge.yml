@@ -87,7 +87,12 @@ jobs:
 
   auto-merge:
     runs-on: ubuntu-latest
-    needs: [claude-review]
+    # Deliberately NOT gated on claude-review. That job fails on every PR due to
+    # an upstream bug (anthropics/claude-code-action#1568, no ETA), and gating on
+    # it silently killed auto-merge here, so the Dependabot backlog re-accumulated.
+    # The real safety gate is branch protection: `gh pr merge --auto` only merges
+    # once the required checks pass. Re-add the gate if/when the upstream bug is
+    # fixed. Same change as west-norfolk-waste-r#256.
     if: github.actor == 'dependabot[bot]'
     steps:
       - name: Fetch Dependabot metadata
@@ -96,9 +101,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Auto-merge when CI passes
+      - name: Auto-merge patch and minor updates
+        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
         run: |
-          gh pr review --approve "$PR_URL" --body "CI and Claude review passed. Auto-merging."
+          gh pr review --approve "$PR_URL" --body "Auto-merging non-major update once required CI checks pass. Claude review is not gated on while upstream claude-code-action#1568 is unfixed."
           gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
