@@ -88,3 +88,7 @@ When testing this project, read `testing-standards.md` from the memory directory
 - Ken Burns effect adds subtle motion
 - No UI chrome - photos are the focus
 - Responsive to any viewport size
+
+## Claude GitHub Actions (removed September 2026)
+
+This repo previously ran `anthropics/claude-code-action` in CI: a `claude-review` job inside the Dependabot auto-merge workflow, an `@claude` mention workflow (`claude.yml`) and an automatic PR review workflow (`claude-code-review.yml`). All of it was removed because the jobs had failed on every PR since July 2026 (expired `CLAUDE_CODE_OAUTH_TOKEN`, plus upstream bugs) and nothing depended on them. Dependabot PRs auto-merge once the required status checks pass; there is no AI review step. The `CLAUDE_CODE_OAUTH_TOKEN` repository secret can be deleted. To bring it back, see https://code.claude.com/docs/en/github-actions.
