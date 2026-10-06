@@ -8,15 +8,18 @@ import {
   getSmartKenBurnsClass,
   isVideoDay,
   getVideoIndex,
+  VIDEO_ORIGIN,
 } from "./daily-media";
 
 export default function Home() {
   const basePath = "";
-  // Production serves videos via the same-origin /r2 proxy (see next.config.ts
-  // rewrites) so the browser never requests *.r2.dev directly (that domain is on
-  // malware DNS blocklists). Local dev uses bundled files in public/videos.
+  // Production serves videos straight from the R2 bucket's custom domain
+  // (Cloudflare edge, proper Range/206 support). Never use *.r2.dev: that
+  // domain is on malware DNS blocklists. Local dev uses public/videos.
   const videoBase =
-    process.env.NODE_ENV === "production" ? "/r2" : `${basePath}/videos`;
+    process.env.NODE_ENV === "production"
+      ? VIDEO_ORIGIN
+      : `${basePath}/videos`;
 
   // Start with null - calculate on client only to avoid hydration mismatch
   const [dailyMedia, setDailyMedia] = useState<{ isVideo: boolean; index: number } | null>(null);

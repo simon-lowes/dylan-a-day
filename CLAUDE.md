@@ -53,10 +53,11 @@ scripts/
 Videos are served from Cloudflare R2, not from the git repo (migrated Jan 2026 to avoid LFS bandwidth limits).
 
 - **Bucket:** `dylanaday`
-- **R2 origin:** `https://pub-8515cc88f6a9443a87cfdf219368ad4c.r2.dev` (referenced only in `next.config.ts` as `R2_VIDEO_ORIGIN`)
-- **Delivery (production):** The browser NEVER requests `*.r2.dev` directly — that domain is on malware DNS blocklists (e.g. Pi-hole RPiList-Malware `||r2.dev^`) and gets null-routed, which broke playback on video days. Instead a `next.config.ts` rewrite proxies `/r2/:path*` → the R2 origin, so videos load same-origin from `dylanaday.simonlowes.cloud/r2/<n>.mp4`. `page.tsx` sets `videoBase = "/r2"` when `NODE_ENV === "production"`.
-- **`NEXT_PUBLIC_VIDEO_URL` is no longer read** (was previously baked in at build). The stale Dokploy env var, if still set, is harmless and can be deleted.
-- **Local dev**: `videoBase` falls back to `basePath/videos` (keep videos in `public/videos/` locally; the `/r2` proxy is prod-only, and this dev machine can't reach `r2.dev` through Pi-hole anyway)
+- **Delivery (production):** videos load from the bucket's custom domain `https://videos.simonlowes.cloud/<n>.mp4` (`VIDEO_ORIGIN` in `src/app/daily-media.ts`, also allowed in the `next.config.ts` CSP `media-src`). Cloudflare's edge serves it with proper byte-range (206) support, which Safari/iOS require.
+- **Never use `*.r2.dev`** (`pub-8515cc88f6a9443a87cfdf219368ad4c.r2.dev`): it's on malware DNS blocklists (e.g. Pi-hole RPiList-Malware `||r2.dev^`). The old same-origin `/r2` proxy through the VPS was removed (Oct 2026): Cloudflare bot-challenged it and the VPS compressed the video, which broke Range requests.
+- **Monitoring:** `.github/workflows/video-health.yml` checks all videos return `206 video/mp4` daily.
+- **`NEXT_PUBLIC_VIDEO_URL` is no longer read.** The stale Dokploy env var / GitHub variable, if still set, is harmless and can be deleted.
+- **Local dev**: `videoBase` falls back to `basePath/videos` (keep videos in `public/videos/` locally)
 - Videos are `.mp4` files numbered `0.mp4` through `29.mp4`, optimized with FFmpeg (H.264 High, CRF 28, 720p, 24fps)
 - **Upload new videos:** Optimize with `npm run optimize:videos`, then `npx wrangler r2 object put "dylanaday/<n>.mp4" --file "public/videos/<n>.mp4" --content-type "video/mp4" --remote`
 - **IMPORTANT:** Always use `--remote` with wrangler — without it, uploads go to a local emulator
@@ -77,8 +78,7 @@ Videos are served from Cloudflare R2, not from the git repo (migrated Jan 2026 t
 ### Deployment
 1. Run `npm run predeploy`
 2. Deploy to Dokploy VPS (auto-deploys on push to main)
-3. Images served from `public/` folder, videos from Cloudflare R2
-4. Set `NEXT_PUBLIC_VIDEO_URL` GitHub Actions variable to the R2 public URL
+3. Images served from `public/` folder, videos from Cloudflare R2 (`videos.simonlowes.cloud`)
 
 ## Testing Standards
 When testing this project, read `testing-standards.md` from the memory directory first. Before running tests, do a quick web search for updates to the specific tools being used. Update the memory file with any changes found.

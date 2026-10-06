@@ -1,0 +1,37 @@
+name: Video Health
+
+# Checks that every daily video is served from the R2 custom domain with
+# byte-range support (206), which Safari/iOS needs to play <video> at all.
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/video-health.yml"
+      - "next.config.ts"
+      - "src/app/daily-media.ts"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      VIDEO_ORIGIN: https://videos.simonlowes.cloud
+      TOTAL_VIDEOS: 30
+    steps:
+      - name: Probe 0.mp4 in detail
+        run: curl -sS -o /dev/null -D - -r 0-1023 --max-time 30 "$VIDEO_ORIGIN/0.mp4" || true
+
+      - name: Check every video returns 206 video/mp4
+        run: |
+          fail=0
+          for i in $(seq 0 $((TOTAL_VIDEOS - 1))); do
+            r=$(curl -s -o /dev/null -r 0-1023 --max-time 30 -w "%{http_code} %{content_type}" "$VIDEO_ORIGIN/$i.mp4" || echo "ERR")
+            echo "$i.mp4  $r"
+            case "$r" in "206 video/mp4"*) ;; *) fail=1 ;; esac
+          done
+          exit $fail

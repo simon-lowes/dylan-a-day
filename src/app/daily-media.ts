@@ -1,5 +1,7 @@
 export const TOTAL_IMAGES = 377;
 export const TOTAL_VIDEOS = 30;
+// R2 bucket "dylanaday" custom domain; also allowed in next.config.ts CSP.
+export const VIDEO_ORIGIN = "https://videos.simonlowes.cloud";
 export const VIDEO_START_DAY = 13; // Jan 13
 export const VIDEO_INTERVAL = 12.1; // Days between videos
 
