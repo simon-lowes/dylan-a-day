@@ -1,0 +1,44 @@
+name: Video Health
+
+# Checks that every daily video is playable in production via the same-origin
+# /r2 proxy (see next.config.ts), and probes the R2 origin directly so a failure
+# shows whether R2 or the app's proxy is at fault.
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/video-health.yml"
+      - "next.config.ts"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      SITE: https://dylanaday.simonlowes.cloud
+      R2_ORIGIN: https://pub-8515cc88f6a9443a87cfdf219368ad4c.r2.dev
+      TOTAL_VIDEOS: 30
+    steps:
+      - name: Probe 0.mp4 in detail
+        run: |
+          for url in "$R2_ORIGIN/0.mp4" "$SITE/r2/0.mp4"; do
+            echo "::group::$url"
+            curl -sS -o /dev/null -D - -r 0-1023 --max-time 30 "$url" || true
+            echo "::endgroup::"
+          done
+
+      - name: Check every video through the /r2 proxy
+        run: |
+          fail=0
+          for i in $(seq 0 $((TOTAL_VIDEOS - 1))); do
+            origin=$(curl -s -o /dev/null -r 0-1023 --max-time 30 -w "%{http_code} %{content_type}" "$R2_ORIGIN/$i.mp4" || echo "ERR")
+            proxy=$(curl -s -o /dev/null -r 0-1023 --max-time 30 -w "%{http_code} %{content_type}" "$SITE/r2/$i.mp4" || echo "ERR")
+            echo "$i.mp4  origin: $origin  proxy: $proxy"
+            case "$proxy" in "206 video/mp4"*) ;; *) fail=1 ;; esac
+          done
+          exit $fail
