@@ -79,6 +79,7 @@ Videos are served from Cloudflare R2, not from the git repo (migrated Jan 2026 t
 1. Run `npm run predeploy`
 2. Deploy to Dokploy VPS (auto-deploys on push to main)
 3. Images served from `public/` folder, videos from Cloudflare R2 (`videos.simonlowes.cloud`)
+4. Security headers (CSP, HSTS, etc.) are owned by `next.config.ts` `headers()`. As of Oct 2026 the VPS reverse proxy (Dokploy/Traefik) overrides them with a smaller set (CSP is only `frame-ancestors 'none'`); remove that proxy header middleware so the app's headers reach visitors.
 
 ## Testing Standards
 When testing this project, read `testing-standards.md` from the memory directory first. Before running tests, do a quick web search for updates to the specific tools being used. Update the memory file with any changes found.
