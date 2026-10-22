@@ -1,0 +1,15 @@
+# Nixpacks build config for Dokploy.
+#
+# Without this, Nixpacks picks Node from `engines.node` using its own bundled
+# nixpkgs archive, which gave an end-of-life Node line (20.x, no security
+# fixes since April 2026). This pins the setup phase to a nixpkgs-unstable
+# channel revision whose nodejs_22 is 22.23.3 (prebuilt in the Nix cache).
+#
+# TODO: Node 22.23.4 fixes the 21 Oct 2026 security release (CVE-2026-111497
+# and others). It is on nixpkgs master but not yet in a channel; once
+# `curl -sL https://channels.nixos.org/nixpkgs-unstable/git-revision` gives a
+# revision whose pkgs/development/web/nodejs/v22.nix says 22.23.4, put that
+# revision here (and in simonlowes' nixpacks.toml).
+[phases.setup]
+nixPkgs = ["nodejs_22"]
+nixpkgsArchive = "5adc50831c259f87faeb09ddf930d43597197473"
