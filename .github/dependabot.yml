@@ -10,3 +10,10 @@ updates:
       semver-major-days: 7
       semver-minor-days: 7
       semver-patch-days: 7
+    groups:
+      # react and react-dom must always be the same version (and the
+      # overrides follow them via "$react"/"$react-dom"), so bump them together.
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
