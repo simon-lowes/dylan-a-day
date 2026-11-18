@@ -52,7 +52,7 @@
     "eslint": "^10",
     "eslint-config-next": "16.4.6",
     "eslint-plugin-security": "^4.2.1",
-    "serve": "^14.2.5",
+    "serve": "^14.2.7",
     "sharp": "^0.35.3",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
