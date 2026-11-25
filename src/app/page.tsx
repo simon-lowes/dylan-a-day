@@ -10,6 +10,7 @@ import {
   getVideoIndex,
   VIDEO_ORIGIN,
 } from "./daily-media";
+import { getFocalPoint, focalStyle } from "./focal-points";
 
 export default function Home() {
   const basePath = "";
@@ -164,6 +165,7 @@ export default function Home() {
             className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
               isLoaded ? "opacity-100" : "opacity-0"
             } ${kenBurnsClass}`}
+            style={focalStyle(getFocalPoint(dailyMedia.index))}
             onLoad={handleImageLoad}
             onError={handleImageError}
           />
